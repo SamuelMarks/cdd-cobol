@@ -1,0 +1,321 @@
+name: CI & Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # ============================================================================
+  # 1. Lint: Policy, Formatting, Shell/JSON/YAML Linting, Strict Compiler,
+  #          100% Documentation Coverage & Strong-Typing Static Analysis
+  # ============================================================================
+  lint:
+    name: Lint & Static Checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install GnuCOBOL and linting toolchains
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential gnucobol jq python3 shellcheck yamllint
+          cobc --version
+          shellcheck --version
+          yamllint --version
+
+      - name: Verify repository git policy
+        run: make check-git-policy
+
+      - name: Check formatting, line endings, and .gitattributes/.editorconfig rules
+        run: |
+          set -euo pipefail
+          EMPTY_TREE="$(git hash-object -t tree /dev/null)"
+          git diff --check "${EMPTY_TREE}" HEAD
+
+          python3 - <<'PY'
+          import pathlib
+          import subprocess
+          import sys
+
+          NUL = bytes([0])
+          CRLF = bytes([13, 10])
+          LF = bytes([10])
+          TAB = chr(9)
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z"], text=False
+          ).split(NUL)
+
+          errors = []
+          checked = 0
+          for raw in tracked:
+              if not raw:
+                  continue
+              path = pathlib.Path(raw.decode("utf-8"))
+              if not path.is_file():
+                  continue
+              checked += 1
+              data = path.read_bytes()
+              try:
+                  text = data.decode("utf-8")
+              except UnicodeDecodeError:
+                  errors.append(f"{path}: invalid UTF-8 byte sequence")
+                  continue
+
+              if path.suffix != ".crlf" and CRLF in data:
+                  errors.append(f"{path}: contains CRLF line endings (expected LF)")
+
+              if data and not data.endswith(LF):
+                  errors.append(f"{path}: missing final newline at EOF")
+
+              is_makefile = path.name in ("Makefile", "GNUmakefile", "makefile") or path.suffix == ".mk"
+              if not is_makefile and TAB in text:
+                  errors.append(f"{path}: contains literal TAB character outside Makefile")
+
+              is_fixture = (
+                  path.parts[:2] == ("tests", "fixtures")
+                  or path.suffix in (".stdin", ".stdout", ".stderr", ".crlf")
+              )
+              is_markdown = path.suffix in (".md", ".markdown")
+              if not is_fixture and not is_markdown:
+                  for lineno, line in enumerate(text.splitlines(), 1):
+                      if line != line.rstrip(" " + TAB):
+                          errors.append(f"{path}:{lineno}: unexpected trailing whitespace")
+
+          if errors:
+              for err in errors:
+                  print(f"ERROR: {err}", file=sys.stderr)
+              sys.exit(1)
+          print(f"[OK] Verified formatting & encoding across {checked} tracked files.")
+          PY
+
+      - name: Lint shell scripts (ShellCheck)
+        run: shellcheck --severity=warning scripts/*.sh
+
+      - name: Verify canonical code formatting (format-code.py --check)
+        run: python3 scripts/format-code.py --check
+
+      - name: Validate JSON and JSON Schema files
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r jf; do
+            [ -z "$jf" ] && continue
+            jq empty "$jf"
+            count=$((count + 1))
+          done < <(git ls-files '*.json')
+          echo "[OK] Validated ${count} JSON file(s)."
+
+      - name: Lint GitHub Actions and pre-commit YAML configs (yamllint)
+        run: |
+          yamllint -d "{extends: default, rules: {line-length: disable, truthy: {check-keys: false}}}" .github/workflows/ .pre-commit-config.yaml
+
+      - name: Compile SDK, CLI, and tools under strict COBOL-85 warning gates
+        run: make build-tools build-sdk build-cli
+
+      - name: Enforce 100% documentation coverage (cdd-doc-check)
+        run: make doc-check
+
+      - name: Verify README.md '% doc coverage' shield is up to date
+        run: python3 scripts/update-readme-shields.py --doc --check
+
+      - name: Enforce strong typing & unified error enum (cdd-type-check)
+        run: make type-check
+
+  # ============================================================================
+  # 2. Test: Cross-Platform Unit/Dialect/Sync/CLI Tests, 100% Coverage Gate,
+  #          and Release Artifact Staging (on v* tags)
+  # ============================================================================
+  test:
+    name: Test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x86_64
+            run_coverage: true
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+            run_coverage: false
+          - os: macos-latest
+            target: darwin-arm64
+            run_coverage: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install GnuCOBOL & LCOV (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential gnucobol lcov python3
+          cobc --version
+          lcov --version
+
+      - name: Install GnuCOBOL & LCOV (macOS)
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: |
+          set -euo pipefail
+          brew install gnucobol lcov
+          cobc --version
+          lcov --version
+
+      - name: Build tools, SDK archive, and CLI executable
+        run: make all
+
+      - name: Smoke-test CLI executable
+        run: |
+          set -euo pipefail
+          ./bin/cdd-cobol --version
+          ./bin/cdd-cobol --help
+
+      - name: Run unit, 10-dialect, sync, and CLI test suites
+        run: make test
+
+      - name: Enforce 100% function, line, and branch coverage
+        if: matrix.run_coverage
+        run: make coverage
+
+      - name: Verify README.md '% test coverage' shield is up to date
+        if: matrix.run_coverage
+        run: python3 scripts/update-readme-shields.py --test --check
+
+      - name: Upload coverage report artifact
+        if: matrix.run_coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-${{ matrix.target }}
+          path: |
+            build/cov/coverage.info
+            build/cov/html/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Package release archive for ${{ matrix.target }}
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          make clean
+          make build-tools build-sdk build-cli
+
+          PKG_DIR="cdd-cobol-${TAG_NAME}-${TARGET}"
+          STAGE_ROOT="dist/${PKG_DIR}"
+          mkdir -p "${STAGE_ROOT}/bin" "${STAGE_ROOT}/lib" "${STAGE_ROOT}/include"
+
+          cp bin/cdd-cobol "${STAGE_ROOT}/bin/"
+          for tool_bin in bin/cdd-doc-check bin/cdd-type-check bin/cdd-inst bin/cdd-cov-check; do
+            if [ -f "${tool_bin}" ]; then
+              cp "${tool_bin}" "${STAGE_ROOT}/bin/"
+            fi
+          done
+
+          cp build/libcddcobol.a "${STAGE_ROOT}/lib/"
+          cp include/*.cpy "${STAGE_ROOT}/include/"
+          cp src/include/*.cpy "${STAGE_ROOT}/include/"
+
+          for doc_file in LICENSE LICENSE.md COPYING NOTICE README.md TODO_PLAN.md; do
+            if [ -f "${doc_file}" ]; then
+              cp "${doc_file}" "${STAGE_ROOT}/"
+            fi
+          done
+
+          mkdir -p dist/release
+          ARCHIVE_NAME="${PKG_DIR}.tar.gz"
+          tar -C dist -czf "dist/release/${ARCHIVE_NAME}" "${PKG_DIR}"
+
+          (
+            cd dist/release
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+            else
+              shasum -a 256 "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+            fi
+          )
+          ls -lh dist/release/
+
+      - name: Upload staged release artifact (${{ matrix.target }})
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-dist-${{ matrix.target }}
+          path: |
+            dist/release/*.tar.gz
+            dist/release/*.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  # ============================================================================
+  # 3. Release: Publish Multi-Platform Archives & Checksums to GitHub Releases
+  #             Triggered strictly on tags beginning with 'v' (e.g. v1.0.0)
+  # ============================================================================
+  release:
+    name: Publish GitHub Release
+    needs:
+      - lint
+      - test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download all staged release artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-dist-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate consolidated SHA256SUMS.txt and verify checksums
+        run: |
+          set -euo pipefail
+          cd release-assets
+          sha256sum -c ./*.sha256
+          sha256sum ./*.tar.gz | sort -k2 > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish release to GitHub Releases
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: cdd-cobol ${{ github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/*.tar.gz
+            release-assets/*.sha256
+            release-assets/SHA256SUMS.txt

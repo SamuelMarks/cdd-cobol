@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LedgerRec",
+  "properties": {
+    "acctNo": { "type": "integer", "minimum": 0 },
+    "acctName": { "type": "string", "maxLength": 20 }
+  },
+  "required": ["acctNo", "acctName"]
+}

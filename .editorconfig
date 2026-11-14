@@ -1,0 +1,121 @@
+# ==============================================================================
+# .editorconfig — https://editorconfig.org
+# Formatting & encoding rules for cdd-cobol (COBOL-60..COBOL-2023 SDK & CLI)
+# ==============================================================================
+
+root = true
+
+# ------------------------------------------------------------------------------
+# Global Defaults (UTF-8, LF, space indentation, trailing newline)
+# ------------------------------------------------------------------------------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# ------------------------------------------------------------------------------
+# COBOL Source Programs & Copybooks
+# Fixed Reference Format (ANSI COBOL-85 host implementation):
+#   Cols 01-06: Sequence Number Area
+#   Col  07   : Indicator Area ('*', '/', '-', 'D', or ' ')
+#   Cols 08-11: Area A (divisions, sections, paragraphs, 01/77 levels)
+#   Cols 12-72: Area B (statements, 02-49/66/88 items, 4-space nesting)
+#   Cols 73-80: Identification Area (enforced via cobc -Wcolumn-overflow)
+# ------------------------------------------------------------------------------
+[*.{cbl,cob,CBL,COB,cpy,CPY,pco,sqb}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# ------------------------------------------------------------------------------
+# Golden Test Fixtures & Raw Stdio Streams
+# Preserve 100% of whitespace, trailing spaces, sequence numbers, and card tags
+# ------------------------------------------------------------------------------
+[tests/fixtures/**]
+trim_trailing_whitespace = false
+
+[*.{stdin,stdout,stderr}]
+trim_trailing_whitespace = false
+
+[*.crlf]
+end_of_line = crlf
+trim_trailing_whitespace = false
+
+# ------------------------------------------------------------------------------
+# Makefiles (GNU Make requires literal TAB recipe prefixes)
+# ------------------------------------------------------------------------------
+[{Makefile,GNUmakefile,makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# ------------------------------------------------------------------------------
+# POSIX / Bash & Python Scripts
+# ------------------------------------------------------------------------------
+[*.{sh,bash,zsh}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+shell_variant = bash
+
+[*.py]
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# ------------------------------------------------------------------------------
+# Windows Batch & PowerShell Scripts
+# ------------------------------------------------------------------------------
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+
+# ------------------------------------------------------------------------------
+# JSON & JSON Schema (Draft 2020-12 / OpenAPI 3.x)
+# ------------------------------------------------------------------------------
+[*.{json,jsonl,ndjson}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# ------------------------------------------------------------------------------
+# YAML & GitHub Actions Workflows
+# ------------------------------------------------------------------------------
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# ------------------------------------------------------------------------------
+# Markdown & Plain-Text Documentation
+# Preserve trailing double-spaces used for Markdown hard line breaks
+# ------------------------------------------------------------------------------
+[*.{md,markdown}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.{txt,rst,adoc}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# ------------------------------------------------------------------------------
+# Repository Dotfiles & INI / TOML Configuration
+# ------------------------------------------------------------------------------
+[{.editorconfig,.gitattributes,.gitignore}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+[*.{toml,ini,cfg,conf,properties}]
+indent_style = space
+indent_size = 2
+tab_width = 2

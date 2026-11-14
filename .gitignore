@@ -1,0 +1,275 @@
+# ==============================================================================
+# .gitignore — cdd-cobol (Portable ANSI COBOL-85 SDK & CLI, COBOL-60..2023)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Project Build, Binary, Staging & Distribution Directories
+# ------------------------------------------------------------------------------
+/bin/
+/build/
+/dist/
+/out/
+/pkg/
+/release/
+/stage/
+/target/
+
+# Packaged release archives & checksums
+*.tar
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.tbz2
+*.tar.xz
+*.txz
+*.tar.zst
+*.zip
+*.7z
+*.sha256
+*.sha512
+*.sig
+*.asc
+SHA256SUMS*
+SHA512SUMS*
+
+# ------------------------------------------------------------------------------
+# COBOL / GnuCOBOL Compiler, Transpiler & Linker Artifacts
+# ------------------------------------------------------------------------------
+# Compiled object files, static archives, and shared/dynamic modules
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+
+# COBOL loadable modules, intermediate bytecode, symbols & debug bundles
+*.mod
+*.int
+*.gnt
+*.idy
+*.stb
+*.cob.h
+*.exp
+*.ilk
+*.pdb
+*.dSYM/
+
+# GnuCOBOL transpiled C/preprocessor/assembler intermediates (cobc -C / -E / -S)
+*.c
+*.c.h
+*.c.l.h
+*.c.l*.h
+*.i
+*.ii
+*.s
+*.S
+
+# Compiler listings, cross-reference tables, symbol dumps & linker maps
+*.lst
+*.lis
+*.prn
+*.xref
+*.sym
+*.map
+*.dump
+
+# COBOL runtime ISAM / Indexed / Relative file handler artifacts (BDB / VBISAM / LMDB)
+*.idx
+*.vix
+*.dat.idx
+*.bdb
+*.lck
+*.lock
+__db.*
+log.0000*
+
+# ------------------------------------------------------------------------------
+# Code Coverage, Instrumentation & Profiling Artifacts
+# ------------------------------------------------------------------------------
+# GCC / Clang / GnuCOBOL gcov & llvm-cov outputs
+*.gcno
+*.gcda
+*.gcov
+*.profraw
+*.profdata
+default.profraw
+
+# LCOV & HTML coverage reports
+coverage.info
+raw.info
+lcov.info
+coverage/
+coverage-html/
+htmlcov/
+
+# Self-hosted COBOL instrumenter/probe outputs (when emitted outside build/)
+manifest.dat
+hits.dat
+
+# Profilers, Valgrind & sanitizers
+gmon.out
+perf.data
+perf.data.old
+callgrind.out.*
+cachegrind.out.*
+massif.out.*
+helgrind.out.*
+vgcore.*
+
+# ------------------------------------------------------------------------------
+# cdd-cobol Runtime, Atomic Write & Test Scratch Files
+# ------------------------------------------------------------------------------
+*.cdd.tmp
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*~
+
+# ------------------------------------------------------------------------------
+# Core Dumps & Crash Logs
+# ------------------------------------------------------------------------------
+/core
+core.[0-9]*
+*.core
+*.stackdump
+*.dmp
+*.mdmp
+hs_err_pid*
+
+# ------------------------------------------------------------------------------
+# Operating System Metadata
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+.directory
+.Trash-*
+.fuse_hidden*
+.nfs*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ------------------------------------------------------------------------------
+# Editors, IDEs & Code Navigation Indexes
+# ------------------------------------------------------------------------------
+# VS Code / Cursor / Windsurf / VSCodium
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# JetBrains IDEs (IntelliJ IDEA, CLion, Fleet)
+.idea/
+*.iml
+*.ipr
+*.iws
+cmake-build-*/
+
+# Vim / Neovim
+[._]*.s[a-v][a-z]
+!*.svg
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+*.un~
+Session.vim
+Sessionx.vim
+.netrwhist
+
+# Emacs
+.#*
+#*#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list/
+tramp
+
+# Sublime Text / Zed / Eclipse / Xcode
+*.sublime-project
+*.sublime-workspace
+.zed/
+.project
+.cproject
+.settings/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# ctags / etags / gtags / cscope
+tags
+TAGS
+!tags/
+GTAGS
+GRTAGS
+GPATH
+GSYMS
+cscope.files
+cscope.out
+cscope.in.out
+cscope.po.out
+
+# ------------------------------------------------------------------------------
+# Local Environment, Secrets & Auxiliary Tooling
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.direnv/
+.tool-versions
+
+# Python / Node / pre-commit auxiliary local environments
+.pre-commit-cache/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+node_modules/
+npm-debug.log*

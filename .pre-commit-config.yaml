@@ -1,0 +1,63 @@
+minimum_pre_commit_version: '3.2.0'
+default_stages:
+  - pre-commit
+fail_fast: false
+
+repos:
+  - repo: local
+    hooks:
+      - id: format-fix
+        name: Auto-format code (fix)
+        description: Automatically format COBOL, Shell, Python, JSON, Makefile, YAML, and Markdown files.
+        entry: python3 scripts/format-code.py --fix
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: format-check
+        name: Check code formatting (recheck)
+        description: Recheck code formatting, UTF-8 encoding, LF line endings, and 72-column COBOL bounds.
+        entry: python3 scripts/format-code.py --check
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: build
+        name: Build SDK, tools, and CLI
+        description: Compile self-hosted tools, libcddcobol.a static SDK, and cdd-cobol CLI under strict COBOL-85 flags.
+        entry: make all
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: lint
+        name: Lint codebase and configuration
+        description: Run git policy check, format check, ShellCheck, Python/JSON/YAML checks, doc-check, and type-check.
+        entry: bash scripts/run-lint.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: test
+        name: Run tests and 100% coverage gate
+        description: Execute all unit, 10-dialect, sync, and CLI test suites plus 100% function/line/branch coverage.
+        entry: make test coverage
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: update-doc-coverage-shield
+        name: Add/update '% doc coverage' shield in README.md
+        description: Compute documentation coverage via cdd-doc-check and add/update the '% doc coverage' shield in README.md.
+        entry: python3 scripts/update-readme-shields.py --doc
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: update-test-coverage-shield
+        name: Add/update '% test coverage' shield in README.md
+        description: Compute function/line/branch test coverage via cdd-cov-check and add/update the '% test coverage' shield in README.md.
+        entry: python3 scripts/update-readme-shields.py --test
+        language: system
+        pass_filenames: false
+        always_run: true

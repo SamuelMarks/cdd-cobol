@@ -1,0 +1,121 @@
+# ==============================================================================
+# .gitattributes — Line Endings, Diff Drivers, Linguist & Binary Rules
+# ==============================================================================
+
+# Default: auto-detect text files and normalize line endings to LF on commit
+* text=auto eol=lf
+
+# ------------------------------------------------------------------------------
+# COBOL Source Programs & Copybooks (COBOL-60 through COBOL-2023)
+# ------------------------------------------------------------------------------
+# Explicitly map .cpy / .CPY and COBOL extensions to COBOL for GitHub Linguist
+*.cbl text eol=lf linguist-language=COBOL
+*.cob text eol=lf linguist-language=COBOL
+*.CBL text eol=lf linguist-language=COBOL
+*.COB text eol=lf linguist-language=COBOL
+*.cpy text eol=lf linguist-language=COBOL
+*.CPY text eol=lf linguist-language=COBOL
+*.pco text eol=lf linguist-language=COBOL
+*.sqb text eol=lf linguist-language=COBOL
+
+# ------------------------------------------------------------------------------
+# Build System, Shell Scripts & CI / Repository Configuration
+# ------------------------------------------------------------------------------
+Makefile        text eol=lf
+GNUmakefile     text eol=lf
+makefile        text eol=lf
+*.mk            text eol=lf
+
+*.sh            text eol=lf diff=bash
+*.bash          text eol=lf diff=bash
+*.zsh           text eol=lf diff=bash
+*.py            text eol=lf diff=python
+
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.toml          text eol=lf
+*.ini           text eol=lf
+*.cfg           text eol=lf
+*.conf          text eol=lf
+*.properties    text eol=lf
+
+.editorconfig   text eol=lf
+.gitattributes  text eol=lf
+.gitignore      text eol=lf
+
+# Windows scripts (if ever added) require CRLF
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+
+# ------------------------------------------------------------------------------
+# JSON, JSON Schema & Documentation
+# ------------------------------------------------------------------------------
+*.json          text eol=lf
+*.schema.json   text eol=lf
+*.jsonl         text eol=lf
+*.ndjson        text eol=lf
+
+*.md            text eol=lf diff=markdown linguist-documentation=true
+*.markdown      text eol=lf diff=markdown linguist-documentation=true
+*.txt           text eol=lf
+*.rst           text eol=lf
+*.adoc          text eol=lf
+LICENSE*        text eol=lf
+COPYING*        text eol=lf
+NOTICE*         text eol=lf
+CHANGELOG*      text eol=lf
+
+# ------------------------------------------------------------------------------
+# Test Suites & Byte-Exact Trivia / I/O Fixtures
+# ------------------------------------------------------------------------------
+# Exempt golden fixtures and stdio inputs from git whitespace checks so
+# intentional trailing spaces, fixed-card columns 73-80, and trivia survive
+*.stdin             text eol=lf -whitespace
+*.stdout            text eol=lf -whitespace
+*.stderr            text eol=lf -whitespace
+*.crlf              text eol=crlf -whitespace
+tests/fixtures/**   -whitespace linguist-vendored=false
+
+# ------------------------------------------------------------------------------
+# Binary, Library, Archive & Media Artifacts (Never mangle bytes or diff text)
+# ------------------------------------------------------------------------------
+*.a       binary
+*.o       binary
+*.obj     binary
+*.lo      binary
+*.so      binary
+*.dylib   binary
+*.dll     binary
+*.exe     binary
+*.lib     binary
+*.mod     binary
+*.int     binary
+*.gnt     binary
+*.idy     binary
+*.pdb     binary
+*.gcno    binary
+*.gcda    binary
+
+*.tar     binary
+*.gz      binary
+*.tgz     binary
+*.bz2     binary
+*.tbz2    binary
+*.xz      binary
+*.txz     binary
+*.zst     binary
+*.zip     binary
+*.7z      binary
+
+*.pdf     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
