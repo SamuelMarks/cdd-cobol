@@ -2,7 +2,7 @@
 set -euo pipefail
 
 COBC="${COBC:-cobc}"
-STD_OS85="--fixed -std=cobol85 -freserved-words=default -faccept-display-extensions=ok -fdevice-mnemonics -fstop-identifier-statement=ok -Wall -Wextra -Werror -Wstrict-typing -Wtruncate -Wcall-params -Wimplicit-define -Wlinkage -Wunreachable -Wcolumn-overflow -Wdangling-text -Wobsolete -Warchaic -Wno-unfinished -Wterminator -I include -I src/include"
+STD_OS85="--fixed -std=cobol85 -freserved-words=default -faccept-display-extensions=ok -fstop-identifier-statement=ok -Wall -Wextra -Werror -Wstrict-typing -Wtruncate -Wcall-params -Wimplicit-define -Wlinkage -Wunreachable -Wcolumn-overflow -Wdangling-text -Wobsolete -Warchaic -Wno-unfinished -Wterminator -I include -I src/include"
 
 mkdir -p build/test-bin build/test-drivers
 

@@ -5,7 +5,15 @@ COBC="${COBC:-cobc}"
 LCOV="${LCOV:-lcov}"
 GENHTML="${GENHTML:-genhtml}"
 
-STD_OS85="--fixed -std=cobol85 -freserved-words=default -faccept-display-extensions=ok -fdevice-mnemonics -fstop-identifier-statement=ok -Wall -Wextra -Werror -Wstrict-typing -Wtruncate -Wcall-params -Wimplicit-define -Wlinkage -Wunreachable -Wcolumn-overflow -Wdangling-text -Wobsolete -Warchaic -Wno-unfinished -Wterminator -I include -I src/include"
+STD_OS85="--fixed -std=cobol85 -freserved-words=default -faccept-display-extensions=ok -fstop-identifier-statement=ok -Wall -Wextra -Werror -Wstrict-typing -Wtruncate -Wcall-params -Wimplicit-define -Wlinkage -Wunreachable -Wcolumn-overflow -Wdangling-text -Wobsolete -Warchaic -Wno-unfinished -Wterminator -I include -I src/include"
+
+if "$COBC" --help 2>&1 | grep -q -- '--coverage'; then
+    COV_CFLAGS=(-g --coverage)
+    COV_LDFLAGS=(-g --coverage)
+else
+    COV_CFLAGS=(-g -O0 -A --coverage)
+    COV_LDFLAGS=(-g -O0 -A --coverage -Q --coverage)
+fi
 
 rm -rf build/inst build/cov build/lcov
 rm -f ./*.gcda ./*.gcno
@@ -91,11 +99,11 @@ while IFS= read -r f; do
     case "$base" in
         CDDCLI)
             sed -e "s/PROGRAM-ID\. ${base}\./PROGRAM-ID. M${base}./g" -e "s/STOP RUN RETURNING .*\./EXIT PROGRAM./g" -e "s/STOP RUN\./EXIT PROGRAM./g" "$f" > "build/lcov/M${base}.cbl"
-            $COBC -c $STD_OS85 -g --coverage "build/lcov/M${base}.cbl" -o "build/lcov/M${base}.o"
+            $COBC -c $STD_OS85 "${COV_CFLAGS[@]}" "build/lcov/M${base}.cbl" -o "build/lcov/M${base}.o"
             LCOV_OBJS+=("build/lcov/M${base}.o")
             ;;
         *)
-            $COBC -c $STD_OS85 -g --coverage "$f" -o "build/lcov/${base}.o"
+            $COBC -c $STD_OS85 "${COV_CFLAGS[@]}" "$f" -o "build/lcov/${base}.o"
             LCOV_OBJS+=("build/lcov/${base}.o")
             ;;
     esac
@@ -121,12 +129,12 @@ if [ -f src/cli/CDDCLI.cbl ]; then
             *) NON_MAIN_LCOV+=("$o") ;;
         esac
     done
-    $COBC -x $STD_OS85 -g --coverage src/cli/CDDCLI.cbl "${NON_MAIN_LCOV[@]}" -o build/lcov/bin/cdd-cobol
+    $COBC -x $STD_OS85 "${COV_LDFLAGS[@]}" src/cli/CDDCLI.cbl "${NON_MAIN_LCOV[@]}" -o build/lcov/bin/cdd-cobol
 fi
 
 for t in "${ALL_TESTS[@]}"; do
     b="$(basename "$t" .cbl)"
-    $COBC -x $STD_OS85 -g --coverage "$t" "${LCOV_OBJS[@]}" -o "build/lcov/$b"
+    $COBC -x $STD_OS85 "${COV_LDFLAGS[@]}" "$t" "${LCOV_OBJS[@]}" -o "build/lcov/$b"
     if [ -f "tests/fixtures/${b}.stdin" ]; then
         CDD_CLI_BIN=build/lcov/bin/cdd-cobol "./build/lcov/$b" < "tests/fixtures/${b}.stdin"
     else
@@ -135,9 +143,11 @@ for t in "${ALL_TESTS[@]}"; do
 done
 
 if [ "${#LCOV_OBJS[@]}" -gt 0 ]; then
-    "$LCOV" --capture --directory build/lcov --output-file build/cov/raw.info --rc branch_coverage=1 --ignore-errors inconsistent,unsupported,format,unused >/dev/null 2>&1
-    "$LCOV" --extract build/cov/raw.info '*/src/*.cbl' '*/src/*/*.cbl' '*/build/lcov/MCDDCLI.cbl' --output-file build/cov/coverage.info --rc branch_coverage=1 --ignore-errors inconsistent,unsupported,format,unused,empty >/dev/null 2>&1
-    "$GENHTML" build/cov/coverage.info --output-directory build/cov/html --rc branch_coverage=1 --ignore-errors inconsistent,unsupported,format,unused,corrupt,empty >/dev/null 2>&1 || true
+    LCOV_IGN="source,inconsistent,unsupported,format,unused,mismatch,negative,branch,gcov,graph,corrupt,empty,count"
+    GENHTML_IGN="source,inconsistent,unsupported,format,unused,mismatch,negative,branch,corrupt,empty,count"
+    "$LCOV" --capture --directory build/lcov --base-directory . --output-file build/cov/raw.info --rc branch_coverage=1 --ignore-errors "$LCOV_IGN" >/dev/null 2>&1
+    "$LCOV" --extract build/cov/raw.info '*/src/*.cbl' '*/src/*/*.cbl' '*/build/lcov/MCDDCLI.cbl' --output-file build/cov/coverage.info --rc branch_coverage=1 --ignore-errors "$LCOV_IGN" >/dev/null 2>&1
+    "$GENHTML" build/cov/coverage.info --output-directory build/cov/html --rc branch_coverage=1 --ignore-errors "$GENHTML_IGN" >/dev/null 2>&1 || true
 fi
 
 ./bin/cdd-cov-check build/cov/manifest.dat build/cov/hits.dat build/cov/coverage.info

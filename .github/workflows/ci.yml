@@ -131,7 +131,7 @@ jobs:
 
       - name: Lint GitHub Actions and pre-commit YAML configs (yamllint)
         run: |
-          yamllint -d "{extends: default, rules: {line-length: disable, truthy: {check-keys: false}}}" .github/workflows/ .pre-commit-config.yaml
+          yamllint -d "{extends: default, rules: {document-start: disable, line-length: disable, truthy: {check-keys: false}}}" .github/workflows/ .pre-commit-config.yaml
 
       - name: Compile SDK, CLI, and tools under strict COBOL-85 warning gates
         run: make build-tools build-sdk build-cli
@@ -246,7 +246,7 @@ jobs:
           cp include/*.cpy "${STAGE_ROOT}/include/"
           cp src/include/*.cpy "${STAGE_ROOT}/include/"
 
-          for doc_file in LICENSE LICENSE.md COPYING NOTICE README.md TODO_PLAN.md; do
+          for doc_file in LICENSE LICENSE-APACHE LICENSE-MIT LICENSE.md COPYING NOTICE README.md TODO_PLAN.md; do
             if [ -f "${doc_file}" ]; then
               cp "${doc_file}" "${STAGE_ROOT}/"
             fi

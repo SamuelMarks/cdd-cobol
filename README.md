@@ -1,6 +1,7 @@
 # cdd-cobol
 
 [![License](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI & Release](https://github.com/SamuelMarks/cdd-cobol/actions/workflows/ci.yml/badge.svg)](https://github.com/SamuelMarks/cdd-cobol/actions/workflows/ci.yml)
 [![100% doc coverage](https://img.shields.io/badge/doc%20coverage-100%25-brightgreen.svg)](#quality-gates) [![100% test coverage](https://img.shields.io/badge/test%20coverage-100%25-brightgreen.svg)](#quality-gates)
 
 Portable ANSI COBOL-85 SDK (`libcddcobol.a`) and CLI (`cdd-cobol`) for bidirectional JSON / JSON Schema (Draft 2020-12 / OpenAPI 3.x) and COBOL user-defined type (UDT) code generation, serialization/deserialization (`serde`), and lossless trivia-preserving surgical synchronization (`sync`) across **all 10 historical and modern COBOL standards (1960–2023)**.

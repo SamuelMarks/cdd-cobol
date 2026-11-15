@@ -18,7 +18,6 @@ STD_PURE85 := --fixed -std=cobol85 $(WARN_FLAGS) $(INC_FLAGS)
 STD_OS85 := --fixed -std=cobol85
 STD_OS85 += -freserved-words=default
 STD_OS85 += -faccept-display-extensions=ok
-STD_OS85 += -fdevice-mnemonics
 STD_OS85 += -fstop-identifier-statement=ok
 STD_OS85 += $(WARN_FLAGS) $(INC_FLAGS)
 
